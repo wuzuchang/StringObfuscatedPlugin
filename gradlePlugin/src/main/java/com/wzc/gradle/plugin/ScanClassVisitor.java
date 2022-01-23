@@ -5,10 +5,20 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.HashMap;
+
 /**
  * ClassVisitor API: https://asm.ow2.io/javadoc/org/objectweb/asm/ClassVisitor.html
  */
 public class ScanClassVisitor extends ClassVisitor {
+
+    private static final int ACC_STATIC_FINAL = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
+    private static final String STRING_DESCRIPTOR = "Ljava/lang/String;";
+    private HashMap<String, String> mStaticFinalField = new HashMap<>();
+    private boolean hasClinit;
+    private String mOwner;
+
+
     public ScanClassVisitor(int api, ClassVisitor classVisitor) {
         super(api, classVisitor);
     }
@@ -26,7 +36,8 @@ public class ScanClassVisitor extends ClassVisitor {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         super.visit(version, access, name, signature, superName, interfaces);
-        System.out.println("visit======" + getAccess(access) + " class: " + name + " extend " + superName);
+        System.out.println("visit======" + " mOwner: " + name);
+        mOwner = name;
     }
 
     /**
@@ -40,8 +51,8 @@ public class ScanClassVisitor extends ClassVisitor {
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
         super.visitInnerClass(name, outerName, innerName, access);
-        System.out.println("InnerClass======" + getAccess(access) + " " + name + "(), outerName:" + outerName
-                + ",innerName:" + innerName);
+        // System.out.println("InnerClass======" + getAccess(access) + " " + name + "(), outerName:" + outerName
+        //        + ",innerName:" + innerName);
     }
 
     /**
@@ -55,13 +66,12 @@ public class ScanClassVisitor extends ClassVisitor {
      */
     @Override
     public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-        System.out.println("Field======" + getAccess(access) + " " + descriptor + " " + name + " " + signature + " " + value);
-        if ("mSwitch".equals(name)) {
-            System.out.println("修改mSwitch初始值为true");
-            return super.visitField(access, name, descriptor, signature, true);
-        } else if ("string".equals(name)) {
-            System.out.println("修改string初始值为xxxx");
-            return super.visitField(access, name, descriptor, signature, "xxxx");
+
+        boolean isStaticFinal = (access & ACC_STATIC_FINAL) == ACC_STATIC_FINAL;
+        // 将 final + static 修饰的变量置空（不然无法在静态块中初始化），之后再在<clinit>中赋值
+        if (STRING_DESCRIPTOR.equals(descriptor) && isStaticFinal && value instanceof String && !"".equals(value)) {
+            mStaticFinalField.put(name, (String) value);
+            return super.visitField(access, name, descriptor, signature, null);
         }
         return super.visitField(access, name, descriptor, signature, value);
     }
@@ -78,57 +88,27 @@ public class ScanClassVisitor extends ClassVisitor {
      */
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        System.out.println("Method======" + getAccess(access) + " " + descriptor + " " + name + "()");
-        return super.visitMethod(access, name, descriptor, signature, exceptions);
+        MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
+        if ("<clinit>".equals(name)) {
+            hasClinit = true;
+        }
+        return new MethodAdapter(Opcodes.ASM7, methodVisitor, access, name, descriptor, mStaticFinalField, mOwner);
     }
 
+    /**
+     * 该方法是最后一个被调用的方法，用于通知访问者该类的所有字段和方法都已访问。
+     */
     @Override
     public void visitEnd() {
-        FieldVisitor fv = super.visitField(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, "timer",
-                "J", null, null);
-        if (fv != null) {
-            fv.visitEnd();
+
+        // 如果没有扫描<clinit>方法，则说明全是final + static；需要插入static <clinit>()方法
+        if (!hasClinit && mStaticFinalField.size() > 0) {
+            MethodVisitor mv = visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+            mv.visitCode();
+            mv.visitInsn(Opcodes.RETURN);
+            mv.visitMaxs(1, 0);
+            mv.visitEnd();
         }
         super.visitEnd();
-    }
-
-    private String getAccess(int access) {
-        String accessString = "";
-        switch (access) {
-            case Opcodes.ACC_PUBLIC:
-                accessString = "public";
-                break;
-            case Opcodes.ACC_PRIVATE:
-                accessString = "private";
-                break;
-            case Opcodes.ACC_PROTECTED:
-                accessString = "protected";
-                break;
-            case Opcodes.ACC_FINAL:
-                accessString = "final";
-                break;
-            case Opcodes.ACC_SUPER:
-                accessString = "extends";
-                break;
-            case Opcodes.ACC_INTERFACE:
-                accessString = "interface";
-                break;
-            case Opcodes.ACC_ABSTRACT:
-                accessString = "abstract";
-                break;
-            case Opcodes.ACC_ANNOTATION:
-                accessString = "annotation";
-                break;
-            case Opcodes.ACC_ENUM:
-                accessString = "enum";
-                break;
-            case Opcodes.ACC_DEPRECATED:
-                accessString = "@Deprecated";
-                break;
-            default:
-                accessString = String.valueOf(access);
-                break;
-        }
-        return accessString;
     }
 }

@@ -2,7 +2,6 @@ package com.wzc.gradle.plugin.launch
 
 import com.android.build.api.transform.*
 import com.android.build.gradle.internal.pipeline.TransformManager
-import com.android.tools.build.jetifier.core.type.PackageName
 import com.wzc.gradle.plugin.CreateTestClass
 import com.wzc.gradle.plugin.ScanClassVisitor
 import groovy.io.FileType
@@ -104,22 +103,15 @@ class StringObfuscateTransform extends Transform {
             //对类型为“文件夹”的input进行遍历
             transformInput.directoryInputs.each { DirectoryInput directoryInput ->
                 File dir = directoryInput.file
-                String javacPath = dir.absolutePath
-                println("javac path: " + javacPath)
                 // 获取output目录
                 def dest = outputProvider.getContentLocation(directoryInput.name,
                         directoryInput.contentTypes, directoryInput.scopes,
                         Format.DIRECTORY)
-                String transformsPath = dest.absolutePath
-                println("transforms path: " + transformsPath)
                 if (dir.isDirectory()) {
                     dir.eachFileRecurse(FileType.FILES) { File file ->
-                        if (file.absolutePath.endsWith("BuildConfig.class")) {
-                            String packageName = file.absolutePath.replace(javacPath,"").replace( "BuildConfig.class","")
-                            println("packageName: " + packageName)
-                            new CreateTestClass().create(javacPath, transformsPath, packageName)
-                        }
+                        // testCreateClass(file)
                         // scan classes
+                        println("find class " + file.name)
                         scanClass(file)
                     }
                 }
@@ -131,16 +123,13 @@ class StringObfuscateTransform extends Transform {
                 //jar文件一般是第三方依赖库jar文件
                 // 重命名输出文件（同目录copyFile会冲突）
                 def jarName = jarInput.name
-                println("JarInput jarName: " + jarName.toString())
                 def md5Name = DigestUtils.md5Hex(jarInput.file.getAbsolutePath())
-                println("JarInput md5Name: " + md5Name.toString())
                 if (jarName.endsWith(".jar")) {
                     jarName = jarName.substring(0, jarName.length() - 4)
                 }
                 //获取输出路径下的jar包名称；+MD5是为了防止重复打包过程中输出路径名不重复，否则会被覆盖。
                 def dest = outputProvider.getContentLocation(jarName + md5Name,
                         jarInput.contentTypes, jarInput.scopes, Format.JAR)
-                println("JarInput output directory: " + dest.toString())
                 //scan jar file to find classes
                 scanJar(jarInput.file);
                 //这里执行字节码的注入，不操作字节码的话也要将输入路径拷贝到输出路径
@@ -149,7 +138,7 @@ class StringObfuscateTransform extends Transform {
         }
     }
 
-    void scanClass(File file) {
+    static void scanClass(File file) {
         try {
             ClassReader cr = new ClassReader(file.bytes)
             ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS)
@@ -164,7 +153,7 @@ class StringObfuscateTransform extends Transform {
         }
     }
 
-    void scanJar(File jarFile) {
+    static void scanJar(File jarFile) {
         JarFile file = null;
         try {
             file = new JarFile(jarFile)

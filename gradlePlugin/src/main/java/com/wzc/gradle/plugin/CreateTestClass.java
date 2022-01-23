@@ -10,6 +10,9 @@ import org.objectweb.asm.Opcodes;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * 通过ASM创建class，但是ASM创建的class不会自动导包。建议使用javapoet生成class文件
+ */
 public class CreateTestClass {
 
 
@@ -27,7 +30,7 @@ public class CreateTestClass {
 
         //生成构造方法的字节码指令
         mw.visitVarInsn(Opcodes.ALOAD, 0);
-        mw.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
+        mw.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
         mw.visitInsn(Opcodes.RETURN);
         mw.visitMaxs(1, 1);
         mw.visitEnd();
@@ -58,7 +61,8 @@ public class CreateTestClass {
         mw.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 "java/io/PrintStream",
                 "println",
-                "(Ljava/lang/String;)V");
+                "(Ljava/lang/String;)V",
+                false);
         mw.visitInsn(Opcodes.RETURN);
         mw.visitMaxs(2, 2);
 
@@ -70,12 +74,10 @@ public class CreateTestClass {
 
         //拷贝到javac
         FileUtils.writeByteArrayToFile(
-                new File(javac  + packageName  + "Example.class"),
-                code);
+                new File(javac + packageName + "Example.class"), code);
         //将生成类拷贝到transforms，用于dex
         FileUtils.writeByteArrayToFile(
-                new File(transforms  + packageName  + "Example.class"),
-                code);
+                new File(transforms + packageName + "Example.class"), code);
     }
 
 }

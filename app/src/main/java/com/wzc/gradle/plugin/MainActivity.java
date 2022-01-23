@@ -13,8 +13,5 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Test test = new Test();
         test.test();
-        if (test.mSwitch){
-            Log.d("wzc==", "switch is open");
-        }
     }
 }

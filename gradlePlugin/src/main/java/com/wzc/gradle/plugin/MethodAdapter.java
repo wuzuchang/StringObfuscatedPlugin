@@ -1,7 +1,12 @@
 package com.wzc.gradle.plugin;
 
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.AdviceAdapter;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * 方法修改
@@ -11,17 +16,57 @@ import org.objectweb.asm.commons.AdviceAdapter;
  * AnnotationVisitor：访问具体的注解信息
  */
 public class MethodAdapter extends AdviceAdapter {
-    /**
-     * Constructs a new {@link AdviceAdapter}.
-     *
-     * @param api           the ASM API version implemented by this visitor. Must be one of {@link
-     *                      Opcodes#ASM4}, {@link Opcodes#ASM5}, {@link Opcodes#ASM6} or {@link Opcodes#ASM7}.
-     * @param methodVisitor the method visitor to which this adapter delegates calls.
-     * @param access        the method's access flags (see {@link Opcodes}).
-     * @param name          the method's name.
-     * @param descriptor    the method's descriptor (see {@link Type Type}).
-     */
-    protected MethodAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor) {
+
+    private HashMap<String, String> mStaticFinalField;
+    private String mMethodName;
+    private String mOwner;
+
+    protected MethodAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor, HashMap<String, String> staticFinalField, String owner) {
         super(api, methodVisitor, access, name, descriptor);
+        mStaticFinalField = staticFinalField;
+        mMethodName = name;
+        mOwner = owner;
+    }
+
+    @Override
+    public void visitCode() {
+        super.visitCode();
+        if ("<clinit>".equals(mMethodName)) {
+            Set<String> strings = mStaticFinalField.keySet();
+            for (String field : strings) {
+                String value = mStaticFinalField.get(field);
+                String encryption = "xxxxasfasfas";
+                mv.visitLdcInsn(encryption);
+                mv.visitFieldInsn(Opcodes.PUTSTATIC, mOwner, field, "Ljava/lang/String;");
+            }
+        }
+    }
+
+    @Override
+    public void visitInsn(int opcode) {
+        if (opcode == ICONST_0 && "com/wzc/gradle/plugin/Test".equals(mOwner)) {
+            mv.visitInsn(ICONST_1);
+        } else
+            super.visitInsn(opcode);
+    }
+
+    @Override
+    public void visitLdcInsn(Object value) {
+        if (value instanceof String) {
+            mv.visitLdcInsn("encryption");
+        } else {
+            super.visitLdcInsn(value);
+        }
+    }
+
+
+    @Override
+    public void visitVarInsn(int opcode, int var) {
+        super.visitVarInsn(opcode, var);
+    }
+
+    @Override
+    public void endMethod() {
+        super.endMethod();
     }
 }
