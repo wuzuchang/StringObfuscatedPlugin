@@ -2,6 +2,7 @@ package com.wzc.gradle.plugin;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -16,6 +17,8 @@ public class ScanClassVisitor extends ClassVisitor {
     private static final String STRING_DESCRIPTOR = "Ljava/lang/String;";
     private HashMap<String, String> mStaticFinalField = new HashMap<>();
     private boolean hasClinit;
+    private boolean hasString;
+    private boolean hasStringDecrypt;
     private String mOwner;
 
 
@@ -68,11 +71,15 @@ public class ScanClassVisitor extends ClassVisitor {
     public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
 
         boolean isStaticFinal = (access & ACC_STATIC_FINAL) == ACC_STATIC_FINAL;
-        // 将 final + static 修饰的变量置空（不然无法在静态块中初始化），之后再在<clinit>中赋值
-        if (STRING_DESCRIPTOR.equals(descriptor) && isStaticFinal && value instanceof String && !"".equals(value)) {
-            mStaticFinalField.put(name, (String) value);
-            return super.visitField(access, name, descriptor, signature, null);
+        if (value instanceof String && !"".equals(value)) {
+            hasString = true;
+            // 将 final + static 修饰的变量置空（不然无法在静态块中初始化），之后再在<clinit>中赋值
+            if (STRING_DESCRIPTOR.equals(descriptor) && isStaticFinal) {
+                mStaticFinalField.put(name, (String) value);
+                return super.visitField(access, name, descriptor, signature, null);
+            }
         }
+
         return super.visitField(access, name, descriptor, signature, value);
     }
 
@@ -89,6 +96,9 @@ public class ScanClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
+        if ("stringDecrypt".equals(name)) {
+            return methodVisitor;
+        }
         if ("<clinit>".equals(name)) {
             hasClinit = true;
         }
@@ -103,12 +113,71 @@ public class ScanClassVisitor extends ClassVisitor {
 
         // 如果没有扫描<clinit>方法，则说明全是final + static；需要插入static <clinit>()方法
         if (!hasClinit && mStaticFinalField.size() > 0) {
+            System.out.println("add <clinit>");
             MethodVisitor mv = visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
             mv.visitCode();
             mv.visitInsn(Opcodes.RETURN);
             mv.visitMaxs(1, 0);
             mv.visitEnd();
         }
+        if (hasString && !hasStringDecrypt) {
+            System.out.println("add addMethod");
+//            addMethod();
+        }
         super.visitEnd();
+    }
+
+    private void addMethod() {
+        MethodVisitor methodVisitor = this.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "stringDecrypt", "(Ljava/lang/String;I)Ljava/lang/String;", null, null);
+        methodVisitor.visitCode();
+        Label label0 = new Label();
+        Label label1 = new Label();
+        Label label2 = new Label();
+        methodVisitor.visitTryCatchBlock(label0, label1, label2, "java/io/UnsupportedEncodingException");
+        Label label3 = new Label();
+        methodVisitor.visitLabel(label3);
+        methodVisitor.visitLineNumber(46, label3);
+        methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+        methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, label0);
+        Label label4 = new Label();
+        methodVisitor.visitLabel(label4);
+        methodVisitor.visitLineNumber(47, label4);
+        methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+        methodVisitor.visitInsn(Opcodes.ARETURN);
+        methodVisitor.visitLabel(label0);
+        methodVisitor.visitLineNumber(50, label0);
+        methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+        methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/String");
+        methodVisitor.visitInsn(Opcodes.DUP);
+        methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+        methodVisitor.visitLdcInsn("encryption");
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/String", "getBytes", "(Ljava/lang/String;)[B", false);
+        methodVisitor.visitInsn(Opcodes.ICONST_1);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "android/util/Base64", "encode", "([BI)[B", false);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
+        methodVisitor.visitLabel(label1);
+        methodVisitor.visitInsn(Opcodes.ARETURN);
+        methodVisitor.visitLabel(label2);
+        methodVisitor.visitLineNumber(51, label2);
+        methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/io/UnsupportedEncodingException"});
+        methodVisitor.visitVarInsn(Opcodes.ASTORE, 3);
+        Label label5 = new Label();
+        methodVisitor.visitLabel(label5);
+        methodVisitor.visitLineNumber(52, label5);
+        methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/UnsupportedEncodingException", "printStackTrace", "()V", false);
+        Label label6 = new Label();
+        methodVisitor.visitLabel(label6);
+        methodVisitor.visitLineNumber(54, label6);
+        methodVisitor.visitLdcInsn("encryption");
+        methodVisitor.visitInsn(Opcodes.ARETURN);
+        Label label7 = new Label();
+        methodVisitor.visitLabel(label7);
+        methodVisitor.visitLocalVariable("e", "Ljava/io/UnsupportedEncodingException;", null, label5, label6, 3);
+        methodVisitor.visitLocalVariable("this", "Lcom/wzc/gradle/plugin/Test;", null, label3, label7, 0);
+        methodVisitor.visitLocalVariable("value", "Ljava/lang/String;", null, label3, label7, 1);
+        methodVisitor.visitLocalVariable("key", "I", null, label3, label7, 2);
+        methodVisitor.visitMaxs(4, 4);
+        methodVisitor.visitEnd();
     }
 }

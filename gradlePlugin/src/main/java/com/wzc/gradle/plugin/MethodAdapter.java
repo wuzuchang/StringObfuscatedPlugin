@@ -35,8 +35,10 @@ public class MethodAdapter extends AdviceAdapter {
             Set<String> strings = mStaticFinalField.keySet();
             for (String field : strings) {
                 String value = mStaticFinalField.get(field);
-                String encryption = "xxxxasfasfas";
+                String encryption = StringEncryptionUtil.encryption(value);
                 mv.visitLdcInsn(encryption);
+                mv.visitIntInsn(BIPUSH, 11);
+                mv.visitMethodInsn(INVOKESTATIC, mOwner, "stringDecrypt", "(Ljava/lang/String;I)Ljava/lang/String;", false);
                 mv.visitFieldInsn(Opcodes.PUTSTATIC, mOwner, field, "Ljava/lang/String;");
             }
         }
@@ -53,7 +55,10 @@ public class MethodAdapter extends AdviceAdapter {
     @Override
     public void visitLdcInsn(Object value) {
         if (value instanceof String) {
-            mv.visitLdcInsn("encryption");
+            String encryption = StringEncryptionUtil.encryption((String) value);
+            mv.visitLdcInsn(encryption);
+            mv.visitIntInsn(BIPUSH, 11);
+            mv.visitMethodInsn(INVOKESTATIC, mOwner, "stringDecrypt", "(Ljava/lang/String;I)Ljava/lang/String;", false);
         } else {
             super.visitLdcInsn(value);
         }
