@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>com.wzc.string.obfuscate</groupId>
+  <artifactId>StringObfuscatelugin</artifactId>
+  <versioning>
+    <versions>
+      <version>1.0.0-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20220305083945</lastUpdated>
+  </versioning>
+</metadata>
