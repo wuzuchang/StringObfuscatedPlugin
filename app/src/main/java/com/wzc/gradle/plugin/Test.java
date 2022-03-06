@@ -10,16 +10,16 @@ import java.util.Base64;
 
 public class Test {
 
-    private String string1 = "1111";
-    private final String string2 = "2222";
-    private static String string3 = "3333"; //会生成<clinit>
-    private static final String string4 = "4444";
-    private static final String string6 = "6666";
+    private String string1 = "string1";
+    private final String string2 = "string2";
+    private static String string3 = "string3"; //会生成<clinit>
+    private static final String string4 = "string4";
+    private static final String string6 = "string6";
     private static final String string5;
     private boolean test = false;
 
     static {
-        string5 = "5555"; //会生成<clinit>
+        string5 = "string5"; //会生成<clinit>
     }
 
     public String test() {
@@ -45,11 +45,11 @@ public class Test {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private static String stringDecrypt(String value, int key) {
-        if (value == null) {
-            return null;
-        }
-        return new String(Base64.getDecoder().decode(value));
-    }
+//    @RequiresApi(api = Build.VERSION_CODES.O)
+//    private static String stringDecrypt(String value, int key) {
+//        if (value == null) {
+//            return null;
+//        }
+//        return new String(Base64.getDecoder().decode(value));
+//    }
 }

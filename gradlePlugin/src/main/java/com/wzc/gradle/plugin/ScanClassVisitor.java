@@ -1,5 +1,8 @@
 package com.wzc.gradle.plugin;
 
+import com.wzc.gradle.plugin.utils.ConstantUtil;
+
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
@@ -54,8 +57,6 @@ public class ScanClassVisitor extends ClassVisitor {
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
         super.visitInnerClass(name, outerName, innerName, access);
-        // System.out.println("InnerClass======" + getAccess(access) + " " + name + "(), outerName:" + outerName
-        //        + ",innerName:" + innerName);
     }
 
     /**
@@ -96,7 +97,8 @@ public class ScanClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
-        if ("stringDecrypt".equals(name)) {
+        if (ConstantUtil.STRING_DECRYPT_METHOD_NAME.equals(name)) {
+            hasStringDecrypt = true;
             return methodVisitor;
         }
         if ("<clinit>".equals(name)) {
@@ -122,62 +124,45 @@ public class ScanClassVisitor extends ClassVisitor {
         }
         if (hasString && !hasStringDecrypt) {
             System.out.println("add addMethod");
-//            addMethod();
+            addMethod();
         }
         super.visitEnd();
     }
 
     private void addMethod() {
-        MethodVisitor methodVisitor = this.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "stringDecrypt", "(Ljava/lang/String;I)Ljava/lang/String;", null, null);
+        MethodVisitor  methodVisitor = this.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", null, null);
+        {
+            AnnotationVisitor annotationVisitor0 = methodVisitor.visitAnnotation("Landroidx/annotation/RequiresApi;", false);
+            annotationVisitor0.visit("api", new Integer(26));
+            annotationVisitor0.visitEnd();
+        }
         methodVisitor.visitCode();
         Label label0 = new Label();
-        Label label1 = new Label();
-        Label label2 = new Label();
-        methodVisitor.visitTryCatchBlock(label0, label1, label2, "java/io/UnsupportedEncodingException");
-        Label label3 = new Label();
-        methodVisitor.visitLabel(label3);
-        methodVisitor.visitLineNumber(46, label3);
-        methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
-        methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, label0);
-        Label label4 = new Label();
-        methodVisitor.visitLabel(label4);
-        methodVisitor.visitLineNumber(47, label4);
-        methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-        methodVisitor.visitInsn(Opcodes.ARETURN);
         methodVisitor.visitLabel(label0);
         methodVisitor.visitLineNumber(50, label0);
+        methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+        Label label1 = new Label();
+        methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, label1);
+        Label label2 = new Label();
+        methodVisitor.visitLabel(label2);
+        methodVisitor.visitLineNumber(51, label2);
+        methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+        methodVisitor.visitInsn(Opcodes.ARETURN);
+        methodVisitor.visitLabel(label1);
+        methodVisitor.visitLineNumber(53, label1);
         methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
         methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/String");
         methodVisitor.visitInsn(Opcodes.DUP);
-        methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
-        methodVisitor.visitLdcInsn("encryption");
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/String", "getBytes", "(Ljava/lang/String;)[B", false);
-        methodVisitor.visitInsn(Opcodes.ICONST_1);
-        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "android/util/Base64", "encode", "([BI)[B", false);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Base64", "getDecoder", "()Ljava/util/Base64$Decoder;", false);
+        methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/util/Base64$Decoder", "decode", "(Ljava/lang/String;)[B", false);
         methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
-        methodVisitor.visitLabel(label1);
         methodVisitor.visitInsn(Opcodes.ARETURN);
-        methodVisitor.visitLabel(label2);
-        methodVisitor.visitLineNumber(51, label2);
-        methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/io/UnsupportedEncodingException"});
-        methodVisitor.visitVarInsn(Opcodes.ASTORE, 3);
-        Label label5 = new Label();
-        methodVisitor.visitLabel(label5);
-        methodVisitor.visitLineNumber(52, label5);
-        methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/UnsupportedEncodingException", "printStackTrace", "()V", false);
-        Label label6 = new Label();
-        methodVisitor.visitLabel(label6);
-        methodVisitor.visitLineNumber(54, label6);
-        methodVisitor.visitLdcInsn("encryption");
-        methodVisitor.visitInsn(Opcodes.ARETURN);
-        Label label7 = new Label();
-        methodVisitor.visitLabel(label7);
-        methodVisitor.visitLocalVariable("e", "Ljava/io/UnsupportedEncodingException;", null, label5, label6, 3);
-        methodVisitor.visitLocalVariable("this", "Lcom/wzc/gradle/plugin/Test;", null, label3, label7, 0);
-        methodVisitor.visitLocalVariable("value", "Ljava/lang/String;", null, label3, label7, 1);
-        methodVisitor.visitLocalVariable("key", "I", null, label3, label7, 2);
-        methodVisitor.visitMaxs(4, 4);
+        Label label3 = new Label();
+        methodVisitor.visitLabel(label3);
+        methodVisitor.visitLocalVariable("value", "Ljava/lang/String;", null, label0, label3, 0);
+        methodVisitor.visitLocalVariable("key", "I", null, label0, label3, 1);
+        methodVisitor.visitMaxs(4, 2);
         methodVisitor.visitEnd();
     }
 }

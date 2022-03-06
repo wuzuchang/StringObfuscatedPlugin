@@ -1,11 +1,13 @@
 package com.wzc.gradle.plugin;
 
+import com.wzc.gradle.plugin.utils.ConstantUtil;
+import com.wzc.gradle.plugin.utils.StringEncryptionUtil;
+
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.AdviceAdapter;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -38,7 +40,7 @@ public class MethodAdapter extends AdviceAdapter {
                 String encryption = StringEncryptionUtil.encryption(value);
                 mv.visitLdcInsn(encryption);
                 mv.visitIntInsn(BIPUSH, 11);
-                mv.visitMethodInsn(INVOKESTATIC, mOwner, "stringDecrypt", "(Ljava/lang/String;I)Ljava/lang/String;", false);
+                mv.visitMethodInsn(INVOKESTATIC, mOwner,  ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", false);
                 mv.visitFieldInsn(Opcodes.PUTSTATIC, mOwner, field, "Ljava/lang/String;");
             }
         }
@@ -58,7 +60,7 @@ public class MethodAdapter extends AdviceAdapter {
             String encryption = StringEncryptionUtil.encryption((String) value);
             mv.visitLdcInsn(encryption);
             mv.visitIntInsn(BIPUSH, 11);
-            mv.visitMethodInsn(INVOKESTATIC, mOwner, "stringDecrypt", "(Ljava/lang/String;I)Ljava/lang/String;", false);
+            mv.visitMethodInsn(INVOKESTATIC, mOwner,  ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", false);
         } else {
             super.visitLdcInsn(value);
         }
