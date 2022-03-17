@@ -22,12 +22,18 @@ public class MethodAdapter extends AdviceAdapter {
     private HashMap<String, String> mStaticFinalField;
     private String mMethodName;
     private String mOwner;
+    private int key1;
+    private int key2;
+    private int key3;
 
-    protected MethodAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor, HashMap<String, String> staticFinalField, String owner) {
+    protected MethodAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor, HashMap<String, String> staticFinalField, String owner, int key1, int key2, int key3) {
         super(api, methodVisitor, access, name, descriptor);
         mStaticFinalField = staticFinalField;
         mMethodName = name;
         mOwner = owner;
+        this.key1 = key1;
+        this.key2 = key2;
+        this.key3 = key3;
     }
 
     @Override
@@ -37,10 +43,10 @@ public class MethodAdapter extends AdviceAdapter {
             Set<String> strings = mStaticFinalField.keySet();
             for (String field : strings) {
                 String value = mStaticFinalField.get(field);
-                String encryption = StringEncryptionUtil.encryption(value);
+                String encryption = StringEncryptionUtil.encryption(value, key1, key2, key3);
                 mv.visitLdcInsn(encryption);
-                mv.visitIntInsn(BIPUSH, 11);
-                mv.visitMethodInsn(INVOKESTATIC, mOwner,  ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", false);
+                mv.visitIntInsn(BIPUSH, key1);
+                mv.visitMethodInsn(INVOKESTATIC, mOwner, ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", false);
                 mv.visitFieldInsn(Opcodes.PUTSTATIC, mOwner, field, "Ljava/lang/String;");
             }
         }
@@ -57,10 +63,10 @@ public class MethodAdapter extends AdviceAdapter {
     @Override
     public void visitLdcInsn(Object value) {
         if (value instanceof String) {
-            String encryption = StringEncryptionUtil.encryption((String) value);
+            String encryption = StringEncryptionUtil.encryption((String) value, key1, key2, key3);
             mv.visitLdcInsn(encryption);
-            mv.visitIntInsn(BIPUSH, 11);
-            mv.visitMethodInsn(INVOKESTATIC, mOwner,  ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", false);
+            mv.visitIntInsn(BIPUSH, key1);
+            mv.visitMethodInsn(INVOKESTATIC, mOwner, ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", false);
         } else {
             super.visitLdcInsn(value);
         }

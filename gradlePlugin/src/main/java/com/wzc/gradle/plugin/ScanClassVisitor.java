@@ -1,5 +1,8 @@
 package com.wzc.gradle.plugin;
 
+
+import static org.gradle.internal.impldep.bsh.org.objectweb.asm.Constants.*;
+
 import com.wzc.gradle.plugin.utils.ConstantUtil;
 
 import org.objectweb.asm.AnnotationVisitor;
@@ -10,6 +13,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.HashMap;
+import java.util.Random;
 
 /**
  * ClassVisitor API: https://asm.ow2.io/javadoc/org/objectweb/asm/ClassVisitor.html
@@ -23,10 +27,22 @@ public class ScanClassVisitor extends ClassVisitor {
     private boolean hasString;
     private boolean hasStringDecrypt;
     private String mOwner;
+    private int key1;
+    // 同一个类里面 key2和key3是固定的，不同类key2和key3不一样
+    private int key2;
+    private int key3;
 
 
     public ScanClassVisitor(int api, ClassVisitor classVisitor) {
         super(api, classVisitor);
+        key1 = getRandomKey();
+        key2 = getRandomKey();
+        key3 = getRandomKey();
+    }
+
+    private int getRandomKey() {
+        Random rand = new Random();
+        return rand.nextInt(127);
     }
 
     /**
@@ -104,7 +120,8 @@ public class ScanClassVisitor extends ClassVisitor {
         if ("<clinit>".equals(name)) {
             hasClinit = true;
         }
-        return new MethodAdapter(Opcodes.ASM7, methodVisitor, access, name, descriptor, mStaticFinalField, mOwner);
+        return new MethodAdapter(Opcodes.ASM7, methodVisitor, access, name, descriptor
+                , mStaticFinalField, mOwner, key1, key2, key3);
     }
 
     /**
@@ -124,13 +141,13 @@ public class ScanClassVisitor extends ClassVisitor {
         }
         if (hasString && !hasStringDecrypt) {
             System.out.println("add addMethod");
-            addMethod();
+            add(key2, key3);
         }
         super.visitEnd();
     }
 
     private void addMethod() {
-        MethodVisitor  methodVisitor = this.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", null, null);
+        MethodVisitor methodVisitor = this.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", null, null);
         {
             AnnotationVisitor annotationVisitor0 = methodVisitor.visitAnnotation("Landroidx/annotation/RequiresApi;", false);
             annotationVisitor0.visit("api", new Integer(26));
@@ -165,4 +182,184 @@ public class ScanClassVisitor extends ClassVisitor {
         methodVisitor.visitMaxs(4, 2);
         methodVisitor.visitEnd();
     }
+
+    private void add(int key2, int key3) {
+        MethodVisitor methodVisitor = this.visitMethod(ACC_PUBLIC | ACC_STATIC, "stringDecrypt", "(Ljava/lang/String;I)Ljava/lang/String;", null, null);
+        methodVisitor.visitCode();
+        Label label0 = new Label();
+        Label label1 = new Label();
+        Label label2 = new Label();
+        methodVisitor.visitTryCatchBlock(label0, label1, label2, "java/lang/Exception");
+        methodVisitor.visitLabel(label0);
+        methodVisitor.visitLineNumber(54, label0);
+        methodVisitor.visitVarInsn(ALOAD, 0);
+        methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "length", "()I", false);
+        methodVisitor.visitInsn(ICONST_2);
+        methodVisitor.visitInsn(IDIV);
+        methodVisitor.visitVarInsn(ISTORE, 2);
+        Label label3 = new Label();
+        methodVisitor.visitLabel(label3);
+        methodVisitor.visitLineNumber(55, label3);
+        methodVisitor.visitVarInsn(ALOAD, 0);
+        methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "toCharArray", "()[C", false);
+        methodVisitor.visitVarInsn(ASTORE, 3);
+        Label label4 = new Label();
+        methodVisitor.visitLabel(label4);
+        methodVisitor.visitLineNumber(56, label4);
+        methodVisitor.visitVarInsn(ILOAD, 2);
+        methodVisitor.visitIntInsn(NEWARRAY, T_BYTE);
+        methodVisitor.visitVarInsn(ASTORE, 4);
+        Label label5 = new Label();
+        methodVisitor.visitLabel(label5);
+        methodVisitor.visitLineNumber(57, label5);
+        methodVisitor.visitInsn(ICONST_0);
+        methodVisitor.visitVarInsn(ISTORE, 5);
+        Label label6 = new Label();
+        methodVisitor.visitLabel(label6);
+        methodVisitor.visitFrame(Opcodes.F_FULL, 6, new Object[]{"java/lang/String", Opcodes.INTEGER, Opcodes.INTEGER, "[C", "[B", Opcodes.INTEGER}, 0, new Object[]{});
+        methodVisitor.visitVarInsn(ILOAD, 5);
+        methodVisitor.visitVarInsn(ILOAD, 2);
+        Label label7 = new Label();
+        methodVisitor.visitJumpInsn(IF_ICMPGE, label7);
+        Label label8 = new Label();
+        methodVisitor.visitLabel(label8);
+        methodVisitor.visitLineNumber(58, label8);
+        methodVisitor.visitVarInsn(ILOAD, 5);
+        methodVisitor.visitInsn(ICONST_2);
+        methodVisitor.visitInsn(IMUL);
+        methodVisitor.visitVarInsn(ISTORE, 6);
+        Label label9 = new Label();
+        methodVisitor.visitLabel(label9);
+        methodVisitor.visitLineNumber(59, label9);
+        methodVisitor.visitVarInsn(ALOAD, 4);
+        methodVisitor.visitVarInsn(ILOAD, 5);
+        methodVisitor.visitLdcInsn("0123456789abcdef");
+        methodVisitor.visitVarInsn(ALOAD, 3);
+        methodVisitor.visitVarInsn(ILOAD, 6);
+        methodVisitor.visitInsn(CALOAD);
+        methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "indexOf", "(I)I", false);
+        methodVisitor.visitInsn(ICONST_4);
+        methodVisitor.visitInsn(ISHL);
+        methodVisitor.visitLdcInsn("0123456789abcdef");
+        methodVisitor.visitVarInsn(ALOAD, 3);
+        methodVisitor.visitVarInsn(ILOAD, 6);
+        methodVisitor.visitInsn(ICONST_1);
+        methodVisitor.visitInsn(IADD);
+        methodVisitor.visitInsn(CALOAD);
+        methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "indexOf", "(I)I", false);
+        methodVisitor.visitInsn(IOR);
+        methodVisitor.visitInsn(I2B);
+        methodVisitor.visitInsn(BASTORE);
+        Label label10 = new Label();
+        methodVisitor.visitLabel(label10);
+        methodVisitor.visitLineNumber(57, label10);
+        methodVisitor.visitIincInsn(5, 1);
+        methodVisitor.visitJumpInsn(GOTO, label6);
+        methodVisitor.visitLabel(label7);
+        methodVisitor.visitLineNumber(61, label7);
+        methodVisitor.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+        methodVisitor.visitVarInsn(ILOAD, 1);
+        methodVisitor.visitIntInsn(SIPUSH, key2);
+        methodVisitor.visitInsn(IXOR);
+        methodVisitor.visitInsn(I2B);
+        methodVisitor.visitVarInsn(ISTORE, 5);
+        Label label11 = new Label();
+        methodVisitor.visitLabel(label11);
+        methodVisitor.visitLineNumber(63, label11);
+        methodVisitor.visitVarInsn(ALOAD, 4);
+        methodVisitor.visitInsn(ICONST_0);
+        methodVisitor.visitVarInsn(ALOAD, 4);
+        methodVisitor.visitInsn(ICONST_0);
+        methodVisitor.visitInsn(BALOAD);
+        methodVisitor.visitIntInsn(SIPUSH, key3);
+        methodVisitor.visitInsn(IXOR);
+        methodVisitor.visitInsn(I2B);
+        methodVisitor.visitInsn(BASTORE);
+        Label label12 = new Label();
+        methodVisitor.visitLabel(label12);
+        methodVisitor.visitLineNumber(64, label12);
+        methodVisitor.visitVarInsn(ALOAD, 4);
+        methodVisitor.visitInsn(ICONST_0);
+        methodVisitor.visitInsn(BALOAD);
+        methodVisitor.visitVarInsn(ISTORE, 6);
+        Label label13 = new Label();
+        methodVisitor.visitLabel(label13);
+        methodVisitor.visitLineNumber(65, label13);
+        methodVisitor.visitInsn(ICONST_1);
+        methodVisitor.visitVarInsn(ISTORE, 7);
+        Label label14 = new Label();
+        methodVisitor.visitLabel(label14);
+        methodVisitor.visitFrame(Opcodes.F_APPEND, 3, new Object[]{Opcodes.INTEGER, Opcodes.INTEGER, Opcodes.INTEGER}, 0, null);
+        methodVisitor.visitVarInsn(ILOAD, 7);
+        methodVisitor.visitVarInsn(ALOAD, 4);
+        methodVisitor.visitInsn(ARRAYLENGTH);
+        Label label15 = new Label();
+        methodVisitor.visitJumpInsn(IF_ICMPGE, label15);
+        Label label16 = new Label();
+        methodVisitor.visitLabel(label16);
+        methodVisitor.visitLineNumber(66, label16);
+        methodVisitor.visitVarInsn(ALOAD, 4);
+        methodVisitor.visitVarInsn(ILOAD, 7);
+        methodVisitor.visitVarInsn(ALOAD, 4);
+        methodVisitor.visitVarInsn(ILOAD, 7);
+        methodVisitor.visitInsn(BALOAD);
+        methodVisitor.visitVarInsn(ILOAD, 6);
+        methodVisitor.visitInsn(IXOR);
+        methodVisitor.visitVarInsn(ILOAD, 5);
+        methodVisitor.visitInsn(IXOR);
+        methodVisitor.visitInsn(I2B);
+        methodVisitor.visitInsn(BASTORE);
+        Label label17 = new Label();
+        methodVisitor.visitLabel(label17);
+        methodVisitor.visitLineNumber(67, label17);
+        methodVisitor.visitVarInsn(ALOAD, 4);
+        methodVisitor.visitVarInsn(ILOAD, 7);
+        methodVisitor.visitInsn(BALOAD);
+        methodVisitor.visitVarInsn(ISTORE, 6);
+        Label label18 = new Label();
+        methodVisitor.visitLabel(label18);
+        methodVisitor.visitLineNumber(65, label18);
+        methodVisitor.visitIincInsn(7, 1);
+        methodVisitor.visitJumpInsn(GOTO, label14);
+        methodVisitor.visitLabel(label15);
+        methodVisitor.visitLineNumber(70, label15);
+        methodVisitor.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+        methodVisitor.visitTypeInsn(NEW, "java/lang/String");
+        methodVisitor.visitInsn(DUP);
+        methodVisitor.visitVarInsn(ALOAD, 4);
+        methodVisitor.visitLdcInsn("UTF-8");
+        methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/String", "<init>", "([BLjava/lang/String;)V", false);
+        methodVisitor.visitLabel(label1);
+        methodVisitor.visitInsn(ARETURN);
+        methodVisitor.visitLabel(label2);
+        methodVisitor.visitLineNumber(71, label2);
+        methodVisitor.visitFrame(Opcodes.F_FULL, 2, new Object[]{"java/lang/String", Opcodes.INTEGER}, 1, new Object[]{"java/lang/Exception"});
+        methodVisitor.visitVarInsn(ASTORE, 2);
+        Label label19 = new Label();
+        methodVisitor.visitLabel(label19);
+        methodVisitor.visitLineNumber(72, label19);
+        methodVisitor.visitVarInsn(ALOAD, 2);
+        methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Exception", "printStackTrace", "()V", false);
+        Label label20 = new Label();
+        methodVisitor.visitLabel(label20);
+        methodVisitor.visitLineNumber(74, label20);
+        methodVisitor.visitLdcInsn("");
+        methodVisitor.visitInsn(ARETURN);
+        Label label21 = new Label();
+        methodVisitor.visitLabel(label21);
+        methodVisitor.visitLocalVariable("pos", "I", null, label9, label10, 6);
+        methodVisitor.visitLocalVariable("i", "I", null, label6, label7, 5);
+        methodVisitor.visitLocalVariable("i", "I", null, label14, label15, 7);
+        methodVisitor.visitLocalVariable("length", "I", null, label3, label2, 2);
+        methodVisitor.visitLocalVariable("hexChars", "[C", null, label4, label2, 3);
+        methodVisitor.visitLocalVariable("stringByte", "[B", null, label5, label2, 4);
+        methodVisitor.visitLocalVariable("keyXor", "B", null, label11, label2, 5);
+        methodVisitor.visitLocalVariable("temp", "B", null, label13, label2, 6);
+        methodVisitor.visitLocalVariable("e", "Ljava/lang/Exception;", null, label19, label20, 2);
+        methodVisitor.visitLocalVariable("ciphertext", "Ljava/lang/String;", null, label0, label21, 0);
+        methodVisitor.visitLocalVariable("key1", "I", null, label0, label21, 1);
+        methodVisitor.visitMaxs(7, 8);
+        methodVisitor.visitEnd();
+    }
+
 }
