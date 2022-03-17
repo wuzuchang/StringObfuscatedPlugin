@@ -19,12 +19,13 @@ public class StringEncryptionUtil {
         int key2 = getRandomKey();
         int key3 = getRandomKey();
         int key4 = getRandomKey();
-        String s1 = encryption("wzc@123哈哈哈", key1, key2, key3);
-        String s2 = encryption("english\n中文@#¥……%……&*（）——+!@#$%^&*()123哈哈哈", key4, key2, key3);
-        System.out.println("加密后：s1=" + s1 + " s2=" + s2);
-        String d1 = decrypt(s1, key1, key2, key3);
-        String d2 = decrypt("aa1974290d703b165f013a5b", 11, 1, 76);
-        System.out.println("解密后：d1=" + d1 + " d2=" + d2);
+     //   String s0 = encryption("", key1, key2, key3);
+//        String s1 = encryption("wzc@123哈哈哈", key1, key2, key3);
+//        String s2 = encryption("english\n中文@#¥……%……&*（）——+!@#$%^&*()123哈哈哈", key4, key2, key3);
+//        System.out.println("加密后：s1=" + s1 + " s2=" + s2);
+//        String d1 = decrypt(s1, key1, key2, key3);
+//        String d2 = decrypt("aa1974290d703b165f013a5b", 11, 1, 76);
+//        System.out.println("解密后：d1=" + d1 + " d2=" + d2);
     }
 
 

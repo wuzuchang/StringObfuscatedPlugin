@@ -42,6 +42,10 @@ public class MethodAdapter extends AdviceAdapter {
         if ("<clinit>".equals(mMethodName)) {
             Set<String> strings = mStaticFinalField.keySet();
             for (String field : strings) {
+                if ("".equals(field)){
+                    super.visitLdcInsn(field);
+                    continue;
+                }
                 String value = mStaticFinalField.get(field);
                 String encryption = StringEncryptionUtil.encryption(value, key1, key2, key3);
                 mv.visitLdcInsn(encryption);
@@ -62,7 +66,7 @@ public class MethodAdapter extends AdviceAdapter {
 
     @Override
     public void visitLdcInsn(Object value) {
-        if (value instanceof String) {
+        if (value instanceof String && !"".equals(value)) {
             String encryption = StringEncryptionUtil.encryption((String) value, key1, key2, key3);
             mv.visitLdcInsn(encryption);
             mv.visitIntInsn(BIPUSH, key1);
