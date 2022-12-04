@@ -52,7 +52,7 @@ class StringObfuscateTransform extends Transform {
      */
     @Override
     Set<? super QualifiedContent.Scope> getScopes() {
-        return TransformManager.SCOPE_FULL_PROJECT
+        return TransformManager.PROJECT_ONLY
     }
 
     /**

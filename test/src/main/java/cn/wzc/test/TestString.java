@@ -1,10 +1,17 @@
-package com.wzc.gradle.plugin;
-
+package cn.wzc.test;
 
 import android.util.Log;
 
-public class Test {
+/**
+ * @description:
+ * @author: wuzuchang
+ * @date: 2022/3/17
+ */
+public class TestString {
 
+    private String string_ = "";
+    private String string_null = null;
+    private String string__;
     private String string1 = "测试中文";
     private final String string2 = "test English";
     private static String string3 = "测试特殊字符@！#¥%……&*（）～+——()_="; //会生成<clinit>
@@ -19,7 +26,7 @@ public class Test {
 
     public String test() {
         Log.d("wzc==", "switch is open");
-        return string1 + string2 + string3 +string4 +string5 ;
+        return string1 + string2 + string3 + string4 + string5 + string6;
     }
 
     public void test(String a) {
@@ -37,12 +44,4 @@ public class Test {
             Log.d("wzc==", p);
         }
     }
-
-//    @RequiresApi(api = Build.VERSION_CODES.O)
-//    private static String stringDecrypt(String value, int key) {
-//        if (value == null) {
-//            return null;
-//        }
-//        return new String(Base64.getDecoder().decode(value));
-//    }
 }

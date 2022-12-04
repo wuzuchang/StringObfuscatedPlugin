@@ -2,6 +2,7 @@ package com.wzc.gradle.plugin.launch
 
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
+import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.LibraryPlugin
 import com.wzc.gradle.plugin.CreateTestClass
 import org.gradle.api.Plugin
@@ -31,7 +32,7 @@ class PluginLaunch implements Plugin<Project> {
             def android = project.extensions.getByType(AppExtension)
             android.registerTransform(new StringObfuscateTransform())
         } else if (isLibrary) {
-            def android = project.extensions.getByType(LibraryPlugin)
+            def android = project.extensions.getByType(LibraryExtension.class)
             android.registerTransform(new StringObfuscateTransform())
         }
     }

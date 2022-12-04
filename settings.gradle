@@ -1,3 +1,4 @@
 include ':gradlePlugin'
 include ':app'
 rootProject.name = "MyGradlePlugin"
+include ':test'
