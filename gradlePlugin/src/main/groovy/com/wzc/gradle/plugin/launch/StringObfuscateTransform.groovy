@@ -2,17 +2,19 @@ package com.wzc.gradle.plugin.launch
 
 import com.android.build.api.transform.*
 import com.android.build.gradle.internal.pipeline.TransformManager
-import com.wzc.gradle.plugin.CreateTestClass
 import com.wzc.gradle.plugin.ScanClassVisitor
 import groovy.io.FileType
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FileUtils
+import org.gradle.internal.io.IoUtils
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
 
 class StringObfuscateTransform extends Transform {
 
@@ -127,13 +129,23 @@ class StringObfuscateTransform extends Transform {
                 if (jarName.endsWith(".jar")) {
                     jarName = jarName.substring(0, jarName.length() - 4)
                 }
+                def src = jarInput.file
                 //获取输出路径下的jar包名称；+MD5是为了防止重复打包过程中输出路径名不重复，否则会被覆盖。
                 def dest = outputProvider.getContentLocation(jarName + md5Name,
                         jarInput.contentTypes, jarInput.scopes, Format.JAR)
-                //scan jar file to find classes
-                scanJar(jarInput.file);
-                //这里执行字节码的注入，不操作字节码的话也要将输入路径拷贝到输出路径
-                FileUtils.copyFile(jarInput.file, dest)
+                if (shouldProcessPreDexJar(src.absolutePath)) {
+                    //scan jar file to find classes
+                    def jarFilePath = "${context.temporaryDir}+${jarName}+${md5Name}.jar"
+                    def jarFile = scanJar(src, jarFilePath)
+                    if (jarFile == null) {
+                        FileUtils.copyFile(src, dest)
+                    } else {
+                        FileUtils.copyFile(jarFile, dest)
+                    }
+                } else {
+                    //这里执行字节码的注入，不操作字节码的话也要将输入路径拷贝到输出路径
+                    FileUtils.copyFile(src, dest)
+                }
             }
         }
     }
@@ -153,24 +165,64 @@ class StringObfuscateTransform extends Transform {
         }
     }
 
-    static void scanJar(File jarFile) {
-        JarFile file = null;
+    static boolean shouldProcessPreDexJar(String path) {
+        return !path.contains("com.android.support") && !path.contains("/android/m2repository");
+    }
+
+    static File scanJar(File inputFile, String outputJarPath) {
+        JarFile jarFile = null
+        File outputJar = null
+        JarOutputStream jarOutputStream = null
         try {
-            file = new JarFile(jarFile)
-            Enumeration<JarEntry> enumeration = file.entries()
+            jarFile = new JarFile(inputFile)
+            outputJar = new JarFile(outputJarPath)
+            jarOutputStream = new JarOutputStream(new FileOutputStream(outputJar))
+            Enumeration<JarEntry> enumeration = jarFile.entries()
             while (enumeration.hasMoreElements()) {
                 JarEntry jarEntry = (JarEntry) enumeration.nextElement()
+                InputStream inputStream = jarFile.getInputStream(jarEntry)
                 String entryName = jarEntry.getName()
+                ZipEntry zipEntry = new ZipEntry(entryName)
+                jarOutputStream.putNextEntry(zipEntry)
+                byte[] sourceClassBytes = IoUtils.toByteArray(inputStream)
+                if (!entryName.endsWith(".class")) {
+                    jarOutputStream.write(sourceClassBytes)
+                    jarOutputStream.closeEntry()
+                    inputStream.close()
+                    continue
+                }
+                try {
+                    ClassReader cr = new ClassReader(sourceClassBytes)
+                    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS)
+                    ScanClassVisitor sc = new ScanClassVisitor(Opcodes.ASM7, cw)
+                    cr.accept(sc, ClassReader.EXPAND_FRAMES)
+
+                    // 写入文件
+                    byte[] code = cw.toByteArray();
+                    jarOutputStream.write(code)
+                } catch (Exception e) {
+                    e.printStackTrace()
+                    jarOutputStream.write(sourceClassBytes)
+                } finally {
+                    inputStream.close()
+                    jarOutputStream.closeEntry()
+                }
             }
         } catch (Exception e) {
             e.printStackTrace()
         } finally {
             try {
-                file.close();
+                jarFile.close();
+            } catch (Exception e) {
+                e.printStackTrace()
+            }
+            try {
+                jarOutputStream.close();
             } catch (Exception e) {
                 e.printStackTrace()
             }
         }
+        return outputJar
     }
 
 }
