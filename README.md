@@ -57,3 +57,7 @@ stringObfuscate{
     packageName = ["com.wzc.gradle.plugin","com.wzc.test"] 
 }
 ```
+
+混淆前后对比
+
+![diff](resources\diff.png)
