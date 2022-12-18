@@ -1,0 +1,44 @@
+plugins {
+    id 'groovy'
+    id 'maven'
+}
+dependencies {
+    implementation gradleApi()
+    implementation localGroovy()
+    implementation 'com.android.tools.build:gradle:4.1.0'
+}
+repositories {
+    mavenCentral()
+}
+
+def group = 'com.wzc.string.obfuscate' //组
+def version = '1.0.0' //版本
+def artifactId = 'StringObfuscatePlugin' //唯一标示
+
+
+//将插件打包上传到本地maven仓库
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            pom.groupId = group
+            pom.artifactId = artifactId
+            pom.version = version
+            //指定本地maven的路径，在项目根目录下
+            repository(url: uri('../repos'))
+        }
+    }
+}
+
+task copyPluginFile {
+    doLast {
+        copy {
+            from '../string_obfuscated/build/libs/'
+            into '../plugin_libs'
+            rename 'string_obfuscated.jar', artifactId + '-' + version + '.jar'
+        }
+    }
+}
+
+assemble.finalizedBy(copyPluginFile)
+build.finalizedBy(copyPluginFile)
+jar.finalizedBy(copyPluginFile)

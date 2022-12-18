@@ -1,4 +1,4 @@
-include ':gradlePlugin'
+include ':string_obfuscated'
 include ':app'
-rootProject.name = "MyGradlePlugin"
-include ':test'
+include ':test_library'
+rootProject.name = "StringObfuscatedPlugin"

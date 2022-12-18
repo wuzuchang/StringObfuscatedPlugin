@@ -1,4 +1,4 @@
-package com.wzc.gradle.plugin;
+package com.wzc.gradle.test;
 
 
 import android.util.Log;
@@ -38,16 +38,11 @@ public class Test {
         }
     }
 
-    @Override
-    public String toString() {
-        return "Test{" +
-                "string1='" + string1 + '\'' +
-                ", string2='" + string2 + '\'' +
-                ", string3='" + string3 + '\'' +
-                ", string4='" + string4 + '\'' +
-                ", string5='" + string5 + '\'' +
-                ", string6='" + string6 + '\'' +
-                ", test=" + test +
-                '}';
-    }
+//    @RequiresApi(api = Build.VERSION_CODES.O)
+//    private static String stringDecrypt(String value, int key) {
+//        if (value == null) {
+//            return null;
+//        }
+//        return new String(Base64.getDecoder().decode(value));
+//    }
 }
