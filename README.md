@@ -4,7 +4,7 @@
 
 ### 使用
 
-下载插件jar文件，复制到项目中的plugin_libs目录下(没有就新增目录)
+下载[插件jar](https://github.com/wuzuchang/StringObfuscatedPlugin/raw/master/plugin_libs/StringObfuscatePlugin-1.0.0.jar)文件，复制到项目中的plugin_libs目录下(没有就新增目录)
 
 ```java
 ├── plugin_libs
