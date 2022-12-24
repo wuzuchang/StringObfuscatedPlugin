@@ -29,4 +29,4 @@ jobs:
     - name: Save library to artifacts
       uses: actions/upload-artifact@v2
       with:
-        path: string_obfuscated/build/lib/*
+        path: string_obfuscated/build/libs/*
