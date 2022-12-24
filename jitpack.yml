@@ -1,0 +1,6 @@
+jdk:
+  - openjdk11
+install:
+  - ./gradlew clean
+  - ./gradlew string_obfuscated:assembleRelease
+  - ./gradlew string_obfuscated:publishMavenJavaPublicationToMavenLocal
