@@ -1,7 +1,24 @@
 plugins {
     id 'groovy'
+    id 'maven-publish'
     id 'maven'
 }
+
+group = 'com.wzc.string.obfuscate'
+
+afterEvaluate {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                groupId = 'com.wzc.string.obfuscate'
+                artifactId = "StringObfuscatePlugin"
+                version = '1.0.0'
+                artifact("$buildDir/outputs/aar/string_obfuscate.jar")
+            }
+        }
+    }
+}
+
 dependencies {
     implementation gradleApi()
     implementation localGroovy()
@@ -9,24 +26,6 @@ dependencies {
 }
 repositories {
     mavenCentral()
-}
-
-def group = 'com.wzc.string.obfuscate' //组
-def version = '1.0.0' //版本
-def artifactId = 'StringObfuscatePlugin' //唯一标示
-
-
-//将插件打包上传到本地maven仓库
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            pom.groupId = group
-            pom.artifactId = artifactId
-            pom.version = version
-            //指定本地maven的路径，在项目根目录下
-            repository(url: uri('../repos'))
-        }
-    }
 }
 
 task copyPluginFile {
