@@ -7,7 +7,7 @@ public class Test {
 
     private String string1 = "测试中文";
     private final String string2 = "test English";
-    private static String string3 = "测试特殊字符@！#¥%……&*（）～+——()_="; //会生成<clinit>
+    private static String string3 = "测试特殊字符@！#¥%……&*（）～+——()_=";
     private static final String string4 = "测试换行\n换行了";
     private static final String string6 = "测试\r\n换行了";
     private static final String string5;

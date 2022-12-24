@@ -3,16 +3,14 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-//        maven {
-//            url uri('./repos') //指定本地maven的路径，在项目根目录下
+        maven { url 'https://jitpack.io' }
+//        flatDir {
+//            dirs 'plugin_libs'
 //        }
-        flatDir {
-            dirs 'plugin_libs'
-        }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:4.1.3"
-        classpath "com.wzc.string.obfuscate:StringObfuscatePlugin:1.0.0"
+        classpath 'com.github.wuzuchang:StringObfuscatedPlugin:1.0.0'
     }
 }
 
@@ -20,12 +18,10 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-//        maven {
-//            url uri('./repos') //指定本地maven的路径，在项目根目录下
+        maven { url 'https://jitpack.io' }
+//        flatDir {
+//            dirs 'plugin_libs'
 //        }
-        flatDir {
-            dirs 'plugin_libs'
-        }
     }
 }
 
