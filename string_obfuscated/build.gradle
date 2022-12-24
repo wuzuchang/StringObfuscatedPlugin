@@ -5,6 +5,8 @@ plugins {
 }
 
 group = 'com.wzc.string.obfuscate'
+def version = '1.0.0' //版本
+def artifactId = 'StringObfuscatePlugin' //唯一标示
 
 afterEvaluate {
     publishing {
