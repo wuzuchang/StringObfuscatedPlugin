@@ -60,4 +60,4 @@ stringObfuscate{
 
 混淆前后对比
 
-![diff](resources\diff.png)
+ <img src="resources/diff.png" alt="diff"/>
