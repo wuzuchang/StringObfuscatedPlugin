@@ -15,7 +15,7 @@ afterEvaluate {
                 groupId = 'com.wzc.string.obfuscate'
                 artifactId = "StringObfuscatePlugin"
                 version = '1.0.0'
-                artifact("$buildDir/outputs/aar/string_obfuscate.jar")
+                artifact("$buildDir/libs/string_obfuscated.jar")
             }
         }
     }
