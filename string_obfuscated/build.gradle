@@ -1,22 +1,39 @@
 plugins {
-    id 'groovy'
+    id 'java-gradle-plugin'
+    id 'org.jetbrains.kotlin.jvm'
     id 'maven-publish'
-    id 'maven'
 }
 
-group = 'com.wzc.string.obfuscate'
-def version = '1.0.0' //版本
-def artifactId = 'StringObfuscatePlugin' //唯一标示
+def group = 'com.wzc.string.obfuscate'
+def versionCode = '2.0.0' //版本
+def pluginName = 'StringObfuscatePlugin' //唯一标示
 
-afterEvaluate {
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                groupId = 'com.wzc.string.obfuscate'
-                artifactId = "StringObfuscatePlugin"
-                version = '1.0.0'
-                artifact("$buildDir/libs/string_obfuscated.jar")
-            }
+//插件配置，这样就不需要创建META-INF/gradle-plugins文件目录了
+gradlePlugin {
+    plugins {
+        //定义的信息可以和发布信息不相同
+        MethodTracer {
+            id = "${group}"  //定义插件id
+            version = versionCode
+            implementationClass = 'com.wzc.gradle.plugin.PluginLaunch'  //定义插件实现类
+        }
+    }
+}
+
+publishing {
+    publications {
+        //PubName
+        plugin(MavenPublication) {
+            groupId = group
+            artifactId = pluginName
+            version = versionCode
+            artifact("$buildDir/libs/string_obfuscated-${version}.jar")
+        }
+    }
+    repositories {
+        maven {
+            // change to point to your repo, e.g. http://my.org/repo
+            url = "$buildDir/repo"
         }
     }
 }
@@ -24,10 +41,23 @@ afterEvaluate {
 dependencies {
     implementation gradleApi()
     implementation localGroovy()
-    implementation 'com.android.tools.build:gradle:4.1.0'
+    // 实现Transform的时候会用到，gradle插件版本：https://developer.android.com/studio/releases/gradle-plugin?hl=zh-cn#updating-gradle
+    // 这里注意使用的gradle插件（AGP）版本不要超过你Android studio 最大支持的版本：https://developer.android.com/studio/releases?hl=zh-cn#android_gradle_plugin_and_android_studio_compatibility
+    // gradle/wrapper 中设置你gradle版本
+    implementation("com.android.tools.build:gradle:7.3.1") {
+        exclude group: "org.ow2.asm"
+    }
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10") {
+        exclude group: "org.ow2.asm"
+    }
+    implementation("org.ow2.asm:asm:9.3")
+    implementation("org.ow2.asm:asm-commons:9.3")
+    implementation("org.ow2.asm:asm-util:9.3")
 }
-repositories {
-    mavenCentral()
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 task copyPluginFile {
@@ -35,7 +65,7 @@ task copyPluginFile {
         copy {
             from '../string_obfuscated/build/libs/'
             into '../plugin_libs'
-            rename 'string_obfuscated.jar', artifactId + '-' + version + '.jar'
+            rename "string_obfuscated-${versionCode}.jar", "${pluginName}-${versionCode}.jar"
         }
     }
 }

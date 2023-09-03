@@ -1,6 +1,6 @@
 package com.wzc.gradle.plugin;
 
-import org.apache.commons.io.FileUtils;
+import org.gradle.internal.impldep.org.apache.commons.io.FileUtils;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;

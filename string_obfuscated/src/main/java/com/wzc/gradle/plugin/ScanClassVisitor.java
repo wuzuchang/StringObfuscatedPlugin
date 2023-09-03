@@ -3,9 +3,8 @@ package com.wzc.gradle.plugin;
 
 import static org.gradle.internal.impldep.bsh.org.objectweb.asm.Constants.*;
 
-import com.wzc.gradle.plugin.utils.ConstantUtil;
+import com.wzc.gradle.plugin.utils.Logger;
 
-import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
@@ -22,19 +21,21 @@ public class ScanClassVisitor extends ClassVisitor {
 
     private static final int ACC_STATIC_FINAL = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
     private static final String STRING_DESCRIPTOR = "Ljava/lang/String;";
-    private HashMap<String, String> mStaticFinalField = new HashMap<>();
+    private final HashMap<String, String> mStaticFinalField = new HashMap<>();
     private boolean hasClinit;
-    private boolean hasString;
+    public static boolean hasString;
     private boolean hasStringDecrypt;
     private String mOwner;
-    private int key1;
+    private final int key1;
     // 同一个类里面 key2和key3是固定的，不同类key2和key3不一样
-    private int key2;
-    private int key3;
+    private final int key2;
+    private final int key3;
 
 
     public ScanClassVisitor(int api, ClassVisitor classVisitor) {
         super(api, classVisitor);
+        hasString = false;
+        hasStringDecrypt = false;
         key1 = getRandomKey();
         key2 = getRandomKey();
         key3 = getRandomKey();
@@ -95,7 +96,6 @@ public class ScanClassVisitor extends ClassVisitor {
                 return super.visitField(access, name, descriptor, signature, null);
             }
         }
-
         return super.visitField(access, name, descriptor, signature, value);
     }
 
@@ -112,14 +112,14 @@ public class ScanClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
-        if (ConstantUtil.STRING_DECRYPT_METHOD_NAME.equals(name)) {
+        if ("stringDecrypt".equals(name)) {
             hasStringDecrypt = true;
             return methodVisitor;
         }
         if ("<clinit>".equals(name)) {
             hasClinit = true;
         }
-        return new MethodAdapter(Opcodes.ASM7, methodVisitor, access, name, descriptor
+        return new MethodAdapter(Opcodes.ASM9, methodVisitor, access, name, descriptor
                 , mStaticFinalField, mOwner, key1, key2, key3);
     }
 
@@ -131,7 +131,7 @@ public class ScanClassVisitor extends ClassVisitor {
 
         // 如果没有扫描<clinit>方法，则说明全是final + static；需要插入static <clinit>()方法
         if (!hasClinit && mStaticFinalField.size() > 0) {
-            System.out.println("add <clinit>");
+            Logger.INSTANCE.d(mOwner + " add <clinit> method");
             MethodVisitor mv = visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
             mv.visitCode();
             mv.visitInsn(Opcodes.RETURN);
@@ -139,49 +139,13 @@ public class ScanClassVisitor extends ClassVisitor {
             mv.visitEnd();
         }
         if (hasString && !hasStringDecrypt) {
-            add(key2, key3);
+            Logger.INSTANCE.d(mOwner + " add stringDecrypt method");
+            addMethod(key2, key3);
         }
         super.visitEnd();
     }
 
-    private void addMethod() {
-        MethodVisitor methodVisitor = this.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", null, null);
-        {
-            AnnotationVisitor annotationVisitor0 = methodVisitor.visitAnnotation("Landroidx/annotation/RequiresApi;", false);
-            annotationVisitor0.visit("api", new Integer(26));
-            annotationVisitor0.visitEnd();
-        }
-        methodVisitor.visitCode();
-        Label label0 = new Label();
-        methodVisitor.visitLabel(label0);
-        methodVisitor.visitLineNumber(50, label0);
-        methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-        Label label1 = new Label();
-        methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, label1);
-        Label label2 = new Label();
-        methodVisitor.visitLabel(label2);
-        methodVisitor.visitLineNumber(51, label2);
-        methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-        methodVisitor.visitInsn(Opcodes.ARETURN);
-        methodVisitor.visitLabel(label1);
-        methodVisitor.visitLineNumber(53, label1);
-        methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-        methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/String");
-        methodVisitor.visitInsn(Opcodes.DUP);
-        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Base64", "getDecoder", "()Ljava/util/Base64$Decoder;", false);
-        methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/util/Base64$Decoder", "decode", "(Ljava/lang/String;)[B", false);
-        methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
-        methodVisitor.visitInsn(Opcodes.ARETURN);
-        Label label3 = new Label();
-        methodVisitor.visitLabel(label3);
-        methodVisitor.visitLocalVariable("value", "Ljava/lang/String;", null, label0, label3, 0);
-        methodVisitor.visitLocalVariable("key", "I", null, label0, label3, 1);
-        methodVisitor.visitMaxs(4, 2);
-        methodVisitor.visitEnd();
-    }
-
-    private void add(int key2, int key3) {
+    private void addMethod(int key2, int key3) {
         MethodVisitor methodVisitor = this.visitMethod(ACC_PUBLIC | ACC_STATIC, "stringDecrypt", "(Ljava/lang/String;I)Ljava/lang/String;", null, null);
         methodVisitor.visitCode();
         Label label0 = new Label();

@@ -1,7 +1,6 @@
 package com.wzc.gradle.plugin;
 
-import com.wzc.gradle.plugin.utils.ConstantUtil;
-import com.wzc.gradle.plugin.utils.StringEncryptionUtil;
+import com.wzc.gradle.plugin.utils.StringEncryptionTestUtil;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -19,12 +18,12 @@ import java.util.Set;
  */
 public class MethodAdapter extends AdviceAdapter {
 
-    private HashMap<String, String> mStaticFinalField;
-    private String mMethodName;
-    private String mOwner;
-    private int key1;
-    private int key2;
-    private int key3;
+    private final HashMap<String, String> mStaticFinalField;
+    private final String mMethodName;
+    private final String mOwner;
+    private final int key1;
+    private final int key2;
+    private final int key3;
 
     protected MethodAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor, HashMap<String, String> staticFinalField, String owner, int key1, int key2, int key3) {
         super(api, methodVisitor, access, name, descriptor);
@@ -47,30 +46,24 @@ public class MethodAdapter extends AdviceAdapter {
                     continue;
                 }
                 String value = mStaticFinalField.get(field);
-                String encryption = StringEncryptionUtil.encryption(value, key1, key2, key3);
+                String encryption = StringEncryptionTestUtil.encryption(value, key1, key2, key3);
                 mv.visitLdcInsn(encryption);
                 mv.visitIntInsn(BIPUSH, key1);
-                mv.visitMethodInsn(INVOKESTATIC, mOwner, ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", false);
+                mv.visitMethodInsn(INVOKESTATIC, mOwner, "stringDecrypt", "(Ljava/lang/String;I)Ljava/lang/String;", false);
                 mv.visitFieldInsn(Opcodes.PUTSTATIC, mOwner, field, "Ljava/lang/String;");
+                ScanClassVisitor.hasString = true;
             }
         }
     }
 
     @Override
-    public void visitInsn(int opcode) {
-        if (opcode == ICONST_0 && "com/wzc/gradle/plugin/Test".equals(mOwner)) {
-            mv.visitInsn(ICONST_1);
-        } else
-            super.visitInsn(opcode);
-    }
-
-    @Override
     public void visitLdcInsn(Object value) {
         if (value instanceof String && !"".equals(value)) {
-            String encryption = StringEncryptionUtil.encryption((String) value, key1, key2, key3);
+            String encryption = StringEncryptionTestUtil.encryption((String) value, key1, key2, key3);
             mv.visitLdcInsn(encryption);
             mv.visitIntInsn(BIPUSH, key1);
-            mv.visitMethodInsn(INVOKESTATIC, mOwner, ConstantUtil.STRING_DECRYPT_METHOD_NAME, "(Ljava/lang/String;I)Ljava/lang/String;", false);
+            mv.visitMethodInsn(INVOKESTATIC, mOwner, "stringDecrypt", "(Ljava/lang/String;I)Ljava/lang/String;", false);
+            ScanClassVisitor.hasString = true;
         } else {
             super.visitLdcInsn(value);
         }

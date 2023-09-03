@@ -3,10 +3,9 @@ package com.wzc.gradle.plugin.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Random;
 
-public class StringEncryptionUtil {
+public class StringEncryptionTestUtil {
 
 
     private static int getRandomKey() {
