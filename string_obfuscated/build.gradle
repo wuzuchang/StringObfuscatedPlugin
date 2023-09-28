@@ -5,7 +5,7 @@ plugins {
 }
 
 def group = 'com.wzc.string.obfuscate'
-def versionCode = '2.0.0' //版本
+def versionCode = '2.0.1' //版本
 def pluginName = 'StringObfuscatePlugin' //唯一标示
 
 //插件配置，这样就不需要创建META-INF/gradle-plugins文件目录了
