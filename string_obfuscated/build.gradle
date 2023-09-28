@@ -27,7 +27,7 @@ publishing {
             groupId = group
             artifactId = pluginName
             version = versionCode
-            artifact("$buildDir/libs/string_obfuscated-${version}.jar")
+            artifact("../plugin_libs/StringObfuscatePlugin-${version}.jar")
         }
     }
     repositories {
