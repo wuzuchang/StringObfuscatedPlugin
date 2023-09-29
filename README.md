@@ -17,7 +17,7 @@ buildscript {
     }
     dependencies {
         ...
-        classpath 'com.github.wuzuchang:StringObfuscatedPlugin:2.0.0'
+        classpath 'com.github.wuzuchang:StringObfuscatedPlugin:2.1.0'
     }
 }
 
